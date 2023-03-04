@@ -1,4 +1,3 @@
-import pickle
 import numpy as np
 import open3d as o3d
 from train4_flann import ICPtransform, getDescriptor
