@@ -16,7 +16,7 @@ import pyflann
 # Path of the images
 proto_folder = "./data/prototype/rnd_heads/"
 test_face = "rnd_head_1.ply"
-save_folder = "./data/library/lib2/"
+save_folder = "./data/library/CurrentLib/"
 
 
 # Get images

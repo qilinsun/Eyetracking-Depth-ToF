@@ -9,6 +9,7 @@ input/
 BaselFaceModel/
 BFM_matlab_code/
 kinect_head_pose_db/
+backup/
 
 
 *.tgz

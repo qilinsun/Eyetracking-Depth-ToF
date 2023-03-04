@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # DDA2081_Eyetracking
 ## Intro
 This repo is to store codes for DDA2081: Independet Study in LGU.
@@ -10,3 +11,6 @@ $\quad$ Locate several landmarks, including left and right pupils.
 
 $\quad$ Track the gazing.
  
+=======
+# DDA2081_Eyetracking
+>>>>>>> remotes/origin/main
