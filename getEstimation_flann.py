@@ -119,16 +119,14 @@ def multi_vote(n,descriptors,vertices,vectors,triangles,landmk_index=-1,l=80000,
     i = 0
     while (i < n):
         try:
-            # tri, distances = ICPtransform(\
-            #         vertices,sampleFromVertices(vertices,l))
-            # tri = triangles[100]
-            # distances = [d+1,d+1,d+1]
-            # while (distances[0]>d or distances[1]>d or distances[2]>d):
-            #     tri,distances = ICPtransform(\
-            #         vertices,sampleFromVertices(vertices,l))
-            # print("distances: ",distances)
-            index = randint(1,200)
-            tri = triangles[index]+1000*np.random.random((1,3))
+            tri, distances = ICPtransform(\
+                    vertices,sampleFromVertices(vertices,l))
+            while (distances[0]>d or distances[1]>d or distances[2]>d):
+                tri,distances = ICPtransform(\
+                    vertices,sampleFromVertices(vertices,l))
+                print("distances: ",distances)
+            # index = randint(1,200)
+            # tri = triangles[index]+1000*np.random.random((1,3))
             des = getDescriptor(vertices,tri, l, k)
             # print("Des: ",des)
             ret = vote(vectors,triangles,des,descriptors,tri,landmk_index)

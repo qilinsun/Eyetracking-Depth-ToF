@@ -270,8 +270,8 @@ def generateLib(files,n, l, k):
     return descriptors,triangles,vectors
 
 if __name__ == "__main__":
-    files = os.listdir(proto_folder)[1:2]
-    data = generateLib(files,n = 100, l = 80000, k = 5)
+    files = os.listdir(proto_folder)[0:10]
+    data = generateLib(files,n = 10000, l = 80000, k = 5)
     # a = data[1][1]
     # print(np.sqrt(np.sum(np.square(a[1]-a[0]))),"???")
     with open(save_folder+'Descriptors_flann.npy', 'wb') as f:
