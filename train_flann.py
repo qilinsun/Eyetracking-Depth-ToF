@@ -4,7 +4,6 @@ from random import randint
 import math
 import icp
 from sklearn.neighbors import KDTree, NearestNeighbors
-import pickle
 import os
 import time
 import pyflann
@@ -14,6 +13,7 @@ import pyflann
 # Intrinsic, set to Kinect2 Depth Camera parameters by default
 
 # Path of the images
+print("Start generating library...")
 proto_folder = "./data/prototype/rnd_heads/"
 save_folder = "./data/library/CurrentLib/"
 
@@ -271,7 +271,7 @@ def generateLib(files,n, l, k):
 
 if __name__ == "__main__":
     files = os.listdir(proto_folder)[1:2]
-    data = generateLib(files,n = 1000, l = 80000, k = 5)
+    data = generateLib(files,n = 100, l = 80000, k = 5)
     # a = data[1][1]
     # print(np.sqrt(np.sum(np.square(a[1]-a[0]))),"???")
     with open(save_folder+'Descriptors_flann.npy', 'wb') as f:

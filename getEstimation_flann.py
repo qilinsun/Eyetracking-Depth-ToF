@@ -1,6 +1,6 @@
 import numpy as np
 import open3d as o3d
-from train4_flann import ICPtransform, getDescriptor
+from train_flann import ICPtransform, getDescriptor
 from random import randint
 from sklearn.neighbors import KDTree
 import math
