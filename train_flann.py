@@ -69,14 +69,13 @@ def sampleFromMesh(mesh,l):
     return eqTriangle
 
 def ICPtransform(pointCloud,triangle):
-    flann = pyflann.FLANN()
-    # neigh = NearestNeighbors(n_neighbors=1)
-    # neigh.fit(pointCloud)
-    # a, indices = neigh.kneighbors(triangle, return_distance=True)
-    # print("original distances: ",a,indices)
-    indices,distances = flann.nn(
-    pointCloud, triangle, 1, algorithm="kmeans", branching=32, iterations=7, checks=16)
-    distances = np.sqrt(distances)
+    # flann = pyflann.FLANN()
+    neigh = NearestNeighbors(n_neighbors=1)
+    neigh.fit(pointCloud)
+    a, indices = neigh.kneighbors(triangle, return_distance=True)
+    # indices,distances = flann.nn(
+    # pointCloud, triangle, 1, algorithm="kmeans", branching=32, iterations=7, checks=16)
+    # distances = np.sqrt(distances)
     # print("original: ",distances)
     target = np.zeros_like(triangle)
     target_set = indices.ravel()
@@ -90,10 +89,11 @@ def ICPtransform(pointCloud,triangle):
     temp[3,3] = 1
     ret = np.dot(trans,temp)
     ret = ret[:3,:3].T
-    _,distances = flann.nn(
-    pointCloud, ret, 1, algorithm="kmeans", branching=32, iterations=7, checks=16)
-    distances = np.sqrt(distances)
+    # _,distances = flann.nn(
+    # pointCloud, ret, 1, algorithm="kmeans", branching=32, iterations=7, checks=16)
+    # distances = np.sqrt(distances)
     # print("After: ",distances)
+    distances,_ = neigh.kneighbors(ret, return_distance=True)
     return ret, distances
 
 # Calculate descripter
@@ -271,7 +271,7 @@ def generateLib(files,n, l, k):
 
 if __name__ == "__main__":
     files = os.listdir(proto_folder)[1:2]
-    data = generateLib(files,n = 100, l = 80000, k = 5)
+    data = generateLib(files,n = 10, l = 80000, k = 5)
     # a = data[1][1]
     # print(np.sqrt(np.sum(np.square(a[1]-a[0]))),"???")
     with open(save_folder+'Descriptors_flann.npy', 'wb') as f:
