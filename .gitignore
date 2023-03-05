@@ -4,7 +4,6 @@ ObsoleteCodes/
 head-pose-estimator/
 reference/
 result/
-input/
 .vscode/
 BaselFaceModel/
 BFM_matlab_code/
