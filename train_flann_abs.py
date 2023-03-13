@@ -209,11 +209,11 @@ def getDataVector(mesh,tri,l,k):
     cent = np.sum(pointCloud,axis = 0)/np.asarray(pointCloud).shape[0]
     tri_cent = (np.sum(tri,axis=0)/3)
     v_T = getDescriptor(pointCloud,tri,l,k)
-    v_c = cent-tri_cent
-    v_1 = pointCloud[8275]-tri_cent
-    v_2 = pointCloud[8320]-tri_cent
-    u_1 = pointCloud[4280]-tri_cent
-    u_2 = pointCloud[12278]-tri_cent
+    v_c = cent
+    v_1 = pointCloud[8275]
+    v_2 = pointCloud[8320]
+    u_1 = pointCloud[4280]
+    u_2 = pointCloud[12278]
     vector = np.array((v_c,v_1,v_2,u_1,u_2))
     return v_T,tri,vector
 
@@ -272,7 +272,7 @@ def generateLib(files,n, l, k):
 if __name__ == "__main__":
     print("Start generating library...")
     files = os.listdir(proto_folder)[0:1]
-    data = generateLib(files,n = 100, l = 80000, k = 5)
+    data = generateLib(files,n = 10000, l = 80000, k = 5)
     # a = data[1][1]
     # print(np.sqrt(np.sum(np.square(a[1]-a[0]))),"???")
     with open(save_folder+'Descriptors_flann.npy', 'wb') as f:

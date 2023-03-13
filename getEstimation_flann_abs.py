@@ -12,8 +12,8 @@ import time
 input_folder = "./data/input/"
 proto_folder = "./data/prototype/rnd_heads/"
 test_face = "rnd_head_0.ply"
-# save_folder = "./data/library/"
 save_folder = "./data/library/test/"
+# save_folder = "./data/library/test/"
 # depth_name = ""
 
 # Transform a depth image to point cloud with provided intrinsic of the camera
@@ -80,6 +80,12 @@ def getNearDes(des,des_lib,h):
 #         tri,distances = ICPtransform(vertices,sampleFromVertices(vertices,l = 80000))
 # des = getDescriptor(vertices,tri, 80000, 5)
 
+def transform(point,trans):
+    point_homo = np.append(point,1)
+    target_homo = np.dot(trans,point_homo)
+    target = target_homo[:3] / target_homo[3]
+    return target
+
 def vote(vectors,triangles,des,descriptors,tri,h,landmk_index = -1):
     ind,dis= getNearDes(des,descriptors,h)
     # ind = ind[0]
@@ -92,30 +98,40 @@ def vote(vectors,triangles,des,descriptors,tri,h,landmk_index = -1):
         corres_vec = vectors[index]
         corres_tri = triangles[index]
         base_cen = (tri[0]+tri[1]+tri[2])/3
-        base_cen_tri = tri - base_cen
+        # base_cen_tri = tri - base_cen
         corres_cen = (corres_tri[0] + corres_tri[1] + corres_tri[2]) /3
-        corres_cen_tri = corres_tri - corres_cen
+        # corres_cen_tri = corres_tri - corres_cen
         # print("tri: ",tri)
         # print("corres: ",corres_tri)
         # print("Corres_Des: ",getDescriptor(vertices,corres_tri,80000,5))
         # trans = np.dot(base_cen_tri.T,np.linalg.inv(corres_cen_tri.T))
         # left_pupil = np.dot(trans,corres_cen_tri.T).T
         # print(left_pupil)
-        a = np.array(base_cen_tri,np.int64)
-        b = np.array(corres_cen_tri,np.int64)
+        A = np.array(corres_tri,np.int64)
+        B = np.array(tri,np.int64)
         # print("tricen: ",a)
         # print("correscen: ",b)
-        trans = np.dot(a.T,np.linalg.inv(b.T))
-        print("Orientation: ",trans)
-        left_pupil = np.dot(trans,np.array(corres_vec[3],np.int64).T).T + base_cen
+        centroid_A = np.mean(A, axis=0)
+        centroid_B = np.mean(B, axis=0)
+        A_centered = A - centroid_A
+        B_centered = B - centroid_B
+        M = np.dot(B_centered.T, A_centered)
+        U, _, Vt = np.linalg.svd(M)
+        R = np.dot(Vt.T, U.T)
+        t = centroid_B - np.dot(R, centroid_A)
+        trans = np.identity(4)
+        trans[:3, :3] = R
+        trans[:3, 3] = t
+        print("Orientation: ",R)
+        corres_pupil = corres_vec[3]
+        # left_pupil = np.dot(trans,np.array(corres_vec[3],np.int64).T).T + base_cen
+        left_pupil = np.dot(R,corres_pupil) + t
         print("Estimated Location: ",left_pupil)
         if landmk_index != -1:
-            landmark = np.dot(trans,np.array(corres_vec[landmk_index],np.int64).T).T \
-                + base_cen
+            landmark = transform(corres_vec[landmk_index],trans)
         else:
             landmark = 0
-        centroid = np.dot(trans,np.array(corres_vec[0],np.int64).T).T \
-            + base_cen
+        centroid = transform(corres_vec[0],trans)
         mul_trans.append(trans)
         mul_cen.append(centroid)
         mul_vec.append(landmark)
@@ -128,13 +144,13 @@ def multi_vote(n,descriptors,vertices,vectors,triangles,landmk_index=-1,l=80000,
     i = 0
     while (i < n):
         try:
-            # tri, distances = ICPtransform(\
-            #         vertices,sampleFromVertices(vertices,l))
-            # if (distances[0]>d or distances[1]>d or distances[2]>d):
-            #     continue
-            index = 0
+            tri, distances = ICPtransform(\
+                    vertices,sampleFromVertices(vertices,l))
+            if (distances[0]>d or distances[1]>d or distances[2]>d):
+                continue
+            # index = 3
             # tri = triangles[index]+1000*np.random.random((1,3))
-            tri = triangles[index]
+            # tri = triangles[index]
             des = getDescriptor(vertices,tri, l, k)
             # print("Des: ",des)
             ret = vote(vectors,triangles,des,descriptors,tri,h,landmk_index)
