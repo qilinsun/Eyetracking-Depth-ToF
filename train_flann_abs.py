@@ -7,15 +7,18 @@ from sklearn.neighbors import KDTree, NearestNeighbors
 import os
 import time
 import pyflann
+import pickle
 
 ## Parameter Setting ##
 # Parameter of the camera:
 # Intrinsic, set to Kinect2 Depth Camera parameters by default
 
 # Path of the images
-proto_folder = "./data/prototype/rnd_heads/"
+index = 2
+number_of_tri = 10000
+proto_folder = "./data/prototype/rnd_heads/" + str(index) + "/"
 # save_folder = "./data/library/CurrentLib/"
-save_folder = "./data/library/test/"
+save_folder = "./data/library/PositionLib/" + str(index) + "/"
 
 
 # Get images
@@ -271,11 +274,15 @@ def generateLib(files,n, l, k):
 
 if __name__ == "__main__":
     print("Start generating library...")
-    files = os.listdir(proto_folder)[0:1]
-    data = generateLib(files,n = 10000, l = 80000, k = 5)
+    files = os.listdir(proto_folder)[0:5]
+    data = generateLib(files,n = number_of_tri, l = 80000, k = 5)
     # a = data[1][1]
     # print(np.sqrt(np.sum(np.square(a[1]-a[0]))),"???")
-    with open(save_folder+'Descriptors_flann.npy', 'wb') as f:
+    pyflann.set_distance_type("euclidean")
+    flann = pyflann.FLANN()
+    # params = flann.build_index(data[0], algorithm = 'kdtree', checks = 1000)
+    # flann.save_index(save_folder+"Index")
+    with open(save_folder+'Descriptors.npy', 'wb') as f:
         np.save(f,data[0])
     with open(save_folder+'Vectors.npy', 'wb') as f:
         np.save(f,data[2])

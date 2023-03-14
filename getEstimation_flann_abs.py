@@ -1,6 +1,6 @@
 import numpy as np
 import open3d as o3d
-from train_flann import ICPtransform, getDescriptor
+from train_flann_abs import ICPtransform, getDescriptor
 from random import randint
 from sklearn.neighbors import KDTree
 import math
@@ -11,8 +11,8 @@ import time
 # Path of the images
 input_folder = "./data/input/"
 proto_folder = "./data/prototype/rnd_heads/"
-test_face = "rnd_head_0.ply"
-save_folder = "./data/library/test/"
+test_face = "rnd_head.ply"
+save_folder = "./data/library/PositionLib/data/"
 # save_folder = "./data/library/test/"
 # depth_name = ""
 
@@ -26,10 +26,9 @@ def getNormals(vertices):
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(vertices)
     # o3d.visualization.draw_geometries([pcd])
-    downpcd = o3d.geometry.voxel_down_sample(pcd,voxel_size=0.01)
+    downpcd = pcd.voxel_down_sample(voxel_size=0.01)
     # o3d.visualization.draw_geometries([downpcd])
-    o3d.geometry.estimate_normals(downpcd,\
-        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=30000, max_nn=30))
+    downpcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=30000, max_nn=30))
     return downpcd.normals
 
 def rotation(v,n,theta):
@@ -61,13 +60,15 @@ def sampleFromVertices(vertices,l):
 # The indices of descriptors and vectors are corresponding
 
 
-def getNearDes(des,des_lib,h):
+def getNearDes(des,fnn,h):
     # s = pickle.dumps(des_lib)
     # tree_copy = pickle.loads(s)
     # dis,ind = tree_copy.query(des.reshape(1,-1),1)
-    flann = pyflann.FLANN()
-    testset = np.array([des])
-    ind,dis = flann.nn(des_lib,testset,h,algorithm="kmeans",branching = 32, iterations = 10, checks = 16)
+    # flann = pyflann.FLANN()
+    # testset = np.array([des])
+    # ind,dis = flann.nn(des_lib,testset,h,algorithm="kmeans",branching = 32, iterations = 10, checks = 16)
+    des = np.array(des,dtype = np.int32)
+    ind,dis = fnn.nn_index(des,1,checks = 1000)
     dis = np.sqrt(dis)
     return ind,dis
 
@@ -86,10 +87,10 @@ def transform(point,trans):
     target = target_homo[:3] / target_homo[3]
     return target
 
-def vote(vectors,triangles,des,descriptors,tri,h,landmk_index = -1):
-    ind,dis= getNearDes(des,descriptors,h)
-    # ind = ind[0]
-    print(ind,dis)
+def vote(vectors,triangles,ind,tri,h,landmk_index = -1):
+    # ind,dis= getNearDes(des,descriptors,h)
+    # # ind = ind[0]
+    # print(ind,dis)
     mul_trans = []
     mul_cen = []
     mul_vec = []
@@ -115,9 +116,14 @@ def vote(vectors,triangles,des,descriptors,tri,h,landmk_index = -1):
         centroid_B = np.mean(B, axis=0)
         A_centered = A - centroid_A
         B_centered = B - centroid_B
+        print("Corres: ", A)
+        print("Tri: ", B)
         M = np.dot(B_centered.T, A_centered)
         U, _, Vt = np.linalg.svd(M)
         R = np.dot(Vt.T, U.T)
+        if np.linalg.det(R) < 0:
+            Vt[2,:] *= -1
+            R = np.dot(Vt.T, U.T)
         t = centroid_B - np.dot(R, centroid_A)
         trans = np.identity(4)
         trans[:3, :3] = R
@@ -137,30 +143,35 @@ def vote(vectors,triangles,des,descriptors,tri,h,landmk_index = -1):
         mul_vec.append(landmark)
     return mul_trans,mul_cen,mul_vec
     
-def multi_vote(n,descriptors,vertices,vectors,triangles,landmk_index=-1,l=80000, d=3000, k=5, h=1):
+def multi_vote(n,flann,vertices,vectors,triangles,landmk_index=-1,l=80000, d=3000, k=5, h=1):
     orients = []
     centroids = []
     landmarks = []
     i = 0
     while (i < n):
-        try:
-            tri, distances = ICPtransform(\
-                    vertices,sampleFromVertices(vertices,l))
-            if (distances[0]>d or distances[1]>d or distances[2]>d):
-                continue
-            # index = 3
-            # tri = triangles[index]+1000*np.random.random((1,3))
-            # tri = triangles[index]
-            des = getDescriptor(vertices,tri, l, k)
-            # print("Des: ",des)
-            ret = vote(vectors,triangles,des,descriptors,tri,h,landmk_index)
-            for j in range(len(ret[0])):
-                orients.append(ret[0][j])
-                centroids.append(ret[1][j])
-                landmarks.append(ret[2][j])
-            i += 1
-        except:
+        # try:
+        tri, distances = ICPtransform(\
+                vertices,sampleFromVertices(vertices,l))
+        if (distances[0]>d or distances[1]>d or distances[2]>d):
             continue
+        # index = 5
+        # tri = triangles[index]+1000*np.random.random((1,3))
+        # tri = triangles[index]
+        des = getDescriptor(vertices,tri, l, k)
+        # print("Des: ",des)
+        ind,dis= getNearDes(des,flann,h)
+        if (dis > 3000):
+            continue
+        # ind = ind[0]
+        print(ind,dis)
+        ret = vote(vectors,triangles,ind,tri,h,landmk_index)
+        for j in range(len(ret[0])):
+            orients.append(ret[0][j])
+            centroids.append(ret[1][j])
+            landmarks.append(ret[2][j])
+        i += 1
+        # except:
+        #     continue
     if landmk_index == -1:
         return orients,centroids,[]
     return orients,centroids,landmarks
@@ -171,8 +182,10 @@ def isNear(R1, R2, theta):
     print(fdis)
     return (fdis < 2.828*abs(math.sin(theta/360*math.pi)))
 
-with open(save_folder+'Descriptors_flann.npy', 'rb') as f:
+with open(save_folder+'Descriptors.npy', 'rb') as f:
     descriptors = np.load(f) # 目前只存了5000个triangle...
+flann = pyflann.FLANN()
+index = flann.load_index(save_folder+'Index',descriptors)
 with open(save_folder+'Vectors.npy', 'rb') as f:
     vectors = np.load(f) # vec: v_c,v_1,v_2,u_1,u_2
 with open(save_folder+'Triangles.npy', 'rb') as f:
@@ -183,8 +196,7 @@ mesh = o3d.io.read_triangle_mesh(input_folder+test_face)
 vertices = np.asarray(mesh.vertices)
 
 # orients,centroids,landmarks
-
-votes = multi_vote(1,descriptors,vertices,vectors,triangles,landmk_index=0,h=1)
+votes = multi_vote(1,flann,vertices,vectors,triangles,landmk_index=0,h=1)
 
 print("Real location: ",vertices[4280])
 print("Time used: ",time.time()-t)
