@@ -1,7 +1,7 @@
 import numpy as np
 import pyflann
 
-folders = 2
+folders = 6
 main_folder = "./data/library/PositionLib/"
 save_folder = main_folder + "data/"
 m = 5 # Number of prototype files used in each generation

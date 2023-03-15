@@ -160,7 +160,10 @@ def multi_vote(n,flann,vertices,vectors,triangles,landmk_index=-1,l=80000, d=300
         des = getDescriptor(vertices,tri, l, k)
         # print("Des: ",des)
         ind,dis= getNearDes(des,flann,h)
-        if (dis > 3000):
+        # 5000: bad
+        # 3000: good : bad = 6 : 4
+        # 2000: often good, but too slow
+        if (dis > 2000):
             continue
         # ind = ind[0]
         print(ind,dis)

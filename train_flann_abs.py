@@ -14,7 +14,7 @@ import pickle
 # Intrinsic, set to Kinect2 Depth Camera parameters by default
 
 # Path of the images
-index = 2
+index = 6
 number_of_tri = 10000
 proto_folder = "./data/prototype/rnd_heads/" + str(index) + "/"
 # save_folder = "./data/library/CurrentLib/"
@@ -274,6 +274,8 @@ def generateLib(files,n, l, k):
 
 if __name__ == "__main__":
     print("Start generating library...")
+    with open(save_folder+'Descriptors.npy', 'wb') as f:
+        print("Folder " + str(index) + " available.")
     files = os.listdir(proto_folder)[0:5]
     data = generateLib(files,n = number_of_tri, l = 80000, k = 5)
     # a = data[1][1]
