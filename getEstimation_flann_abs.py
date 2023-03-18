@@ -87,7 +87,7 @@ def transform(point,trans):
     target = target_homo[:3] / target_homo[3]
     return target
 
-def vote(vectors,triangles,ind,tri,h,landmk_index = -1):
+def vote(vectors,triangles,ind,tri,h,landmk_index):
     # ind,dis= getNearDes(des,descriptors,h)
     # # ind = ind[0]
     # print(ind,dis)
@@ -131,17 +131,16 @@ def vote(vectors,triangles,ind,tri,h,landmk_index = -1):
         # left_pupil = np.dot(trans,np.array(corres_vec[3],np.int64).T).T + base_cen
         left_pupil = np.dot(R,corres_pupil) + t
         # print("Estimated Location: ",left_pupil)
-        if landmk_index != -1:
-            landmark = transform(corres_vec[landmk_index],trans)
-        else:
-            landmark = 0
+        landmarks = []
+        for j in range(landmk_index):
+            landmarks.append(transform(corres_vec[j],trans))
         centroid = transform(corres_vec[0],trans)
         mul_trans.append(R)
         mul_cen.append(centroid)
-        mul_vec.append(landmark)
+        mul_vec.append(landmarks)
     return mul_trans,mul_cen,mul_vec
     
-def multi_vote(n,flann,vertices,vectors,triangles,landmk_index=-1,h=1,l=80000, d=3000, k=5):
+def multi_vote(n,flann,vertices,vectors,triangles,landmk_index=5,h=1,l=80000, d=3000, k=5):
     orients = []
     centroids = []
     landmarks = []
@@ -185,8 +184,8 @@ def isNear(R1, R2, theta):
     print(fdis)
     return (fdis < 2.828*abs(math.sin(theta/360*math.pi)))
 
-# return 3 arrays: datas from multiple votings
-# Orientations, estimated centroids and specified landmarks
+# return 4 arrays: datas from multiple votings
+# Orientations, estimated centroids and landmarks(0,1,2,3,4), and sample triangles
 mesh = o3d.io.read_triangle_mesh(input_folder+test_face)
 def voting(save_folder,mesh,landmk_index,h):
     print("Start voting...")
