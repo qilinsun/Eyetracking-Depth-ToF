@@ -1,7 +1,7 @@
 import numpy as np
 import pyflann
-
-folders = 6
+import time
+folders = 55
 main_folder = "./data/library/PositionLib/"
 save_folder = main_folder + "data/"
 m = 5 # Number of prototype files used in each generation
@@ -16,7 +16,7 @@ cks = 100
 descriptors = np.zeros((folders*m*n,k**2),np.int32)
 triangles = np.zeros((folders*m*n,3,3),np.int32)
 vectors = np.zeros((folders*m*n,5,3),np.int32)
-
+t = time.time()
 for i in range(folders):
     index = i+1
     with open(main_folder + str(index) + "/" + "Descriptors.npy",'rb') as f:
@@ -25,7 +25,7 @@ for i in range(folders):
         triangles[i*m*n:(i+1)*m*n,:] = np.load(f)[0:m*n,:]
     with open(main_folder + str(index) + "/" + "Vectors.npy",'rb') as f:
         vectors[i*m*n:(i+1)*m*n,:] = np.load(f)[0:m*n,:]
-
+        
 flann = pyflann.FLANN()
 params = flann.build_index(descriptors, algorithm = 'kdtree', checks = cks)
 

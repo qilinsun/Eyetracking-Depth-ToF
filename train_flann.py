@@ -7,15 +7,19 @@ from sklearn.neighbors import KDTree, NearestNeighbors
 import os
 import time
 import pyflann
+import pickle
+import multiprocessing as mp
 
 ## Parameter Setting ##
 # Parameter of the camera:
 # Intrinsic, set to Kinect2 Depth Camera parameters by default
 
 # Path of the images
-proto_folder = "./data/prototype/rnd_heads/"
+index = 56
+number_of_tri = 10000
+proto_folder = "./data/prototype/rnd_heads/" + str(index) + "/"
 # save_folder = "./data/library/CurrentLib/"
-save_folder = "./data/library/test/"
+save_folder = "./data/library/PositionLib/" + str(index) + "/"
 
 
 # Get images
@@ -68,10 +72,10 @@ def sampleFromMesh(mesh,l):
     eqTriangle = np.array((point+v1,point+v2,point+v3))
     return eqTriangle
 
-def ICPtransform(pointCloud,triangle):
+def ICPtransform(pointCloud,neigh,triangle):
     # flann = pyflann.FLANN()
-    neigh = NearestNeighbors(n_neighbors=1)
-    neigh.fit(pointCloud)
+    # neigh = NearestNeighbors(n_neighbors=1)
+    # neigh.fit(pointCloud)
     a, indices = neigh.kneighbors(triangle, return_distance=True)
     # indices,distances = flann.nn(
     # pointCloud, triangle, 1, algorithm="kmeans", branching=32, iterations=7, checks=16)
@@ -84,6 +88,7 @@ def ICPtransform(pointCloud,triangle):
     target[2] = pointCloud[target_set[2]]
     trans,_,_ = icp.icp(triangle,target,max_iterations=3)
     # temp = np.ones((4,triangle.shape[0]))
+    # print(trans)
     temp = np.ones((4,4))
     temp[:3,:3] = triangle.T
     temp[3,3] = 1
@@ -209,11 +214,11 @@ def getDataVector(mesh,tri,l,k):
     cent = np.sum(pointCloud,axis = 0)/np.asarray(pointCloud).shape[0]
     tri_cent = (np.sum(tri,axis=0)/3)
     v_T = getDescriptor(pointCloud,tri,l,k)
-    v_c = cent-tri_cent
-    v_1 = pointCloud[8275]-tri_cent
-    v_2 = pointCloud[8320]-tri_cent
-    u_1 = pointCloud[4280]-tri_cent
-    u_2 = pointCloud[12278]-tri_cent
+    v_c = cent
+    v_1 = pointCloud[8275]
+    v_2 = pointCloud[8320]
+    u_1 = pointCloud[4280]
+    u_2 = pointCloud[12278]
     vector = np.array((v_c,v_1,v_2,u_1,u_2))
     return v_T,tri,vector
 
@@ -224,10 +229,12 @@ def getDataPiece(faceName,n,l,k,d = 3000):
     descriptors = np.zeros((n,k**2),np.float32)
     ply = readPLY(faceName)
     t = time.time()
+    neigh = NearestNeighbors(n_neighbors=1)
+    neigh.fit(ply.vertices)
     for i in range(n):
-        tri,distances = ICPtransform(np.asarray(ply.vertices),sampleFromMesh(ply,l))
+        tri,distances = ICPtransform(np.asarray(ply.vertices),neigh,sampleFromMesh(ply,l))
         while (distances[0]>d or distances[1]>d or distances[2]>d):
-            tri,distances = ICPtransform(np.asarray(ply.vertices),sampleFromMesh(ply,l))
+            tri,distances = ICPtransform(np.asarray(ply.vertices),neigh,sampleFromMesh(ply,l))
         datas = getDataVector(ply,tri,l,k)
         descriptors[i,:],triangles[i],ret[i] = datas
     print(time.time()-t)
@@ -269,18 +276,74 @@ def generateLib(files,n, l, k):
     # KDTree_des = KDTree(descriptors, leaf_size = 4)
     return descriptors,triangles,vectors
 
-if __name__ == "__main__":
-    print("Start generating library...")
-    files = os.listdir(proto_folder)[0:1]
-    data = generateLib(files,n = 100, l = 80000, k = 5)
-    # a = data[1][1]
-    # print(np.sqrt(np.sum(np.square(a[1]-a[0]))),"???")
-    with open(save_folder+'Descriptors_flann.npy', 'wb') as f:
-        np.save(f,data[0])
-    with open(save_folder+'Vectors.npy', 'wb') as f:
-        np.save(f,data[2])
-    with open(save_folder+'Triangles.npy', 'wb') as f:
-        np.save(f,data[1])
-# Average time per mesh: 360s*n/1000 = 0.36n
+# if __name__ == "__main__":
+#     if os.listdir(save_folder) != []:
+#         print("Folder " + save_folder + " is not empty. Are you sure to proceed?")
+#         ans = input("Y/[N]")
+#         if ans != "Y":
+#             quit()
+#     print("Folder " + str(index) + " available.")
+#     print("Start generating library...")
+#     # with open(save_folder+
+#     # 'Descriptors.npy', 'wb') as f:
+#     #     print("Folder " + str(index) + " available.")
+#     files = os.listdir(proto_folder)[0:5]
+#     data = generateLib(files,n = number_of_tri, l = 80000, k = 5)
+#     # a = data[1][1]
+#     # print(np.sqrt(np.sum(np.square(a[1]-a[0]))),"???")
+#     # pyflann.set_distance_type("euclidean")
+#     # flann = pyflann.FLANN()
+#     # params = flann.build_index(data[0], algorithm = 'kdtree', checks = 1000)
+#     # flann.save_index(save_folder+"Index")
+#     with open(save_folder+'Descriptors.npy', 'wb') as f:
+#         np.save(f,data[0])
+#     with open(save_folder+'Vectors.npy', 'wb') as f:
+#         np.save(f,data[2])
+#     with open(save_folder+'Triangles.npy', 'wb') as f:
+#         np.save(f,data[1])
+# # Average time per mesh: 500s*n/10000 = 0.05'n
 
+def process_mesh(par):
+    # Perform ICP transform and descriptor calculation on a single mesh
+    des, tri, vec = getDataPiece(par[0], par[1], par[2], par[3])
+    return des, tri, vec
+
+if __name__ == '__main__':
+    t = time.time()
+    try:
+        if os.listdir(save_folder) != []:
+            print("Folder " + save_folder + " is not empty. Are you sure to proceed?")
+            ans = input("Y/[N]")
+            if ans != "Y":
+                quit()
+    except:
+        os.mkdir(save_folder)
+    # print("Folder " + str(index) + " available.")
+    print("Start generating library...")
+    # Initialize multiprocessing pool with number of available CPUs
+    pool = mp.Pool(mp.cpu_count()) 
+    # print("Number of CPUs: ",mp.cpu_count()) #20
+
+    # List of mesh filenames to process
+    files = os.listdir(proto_folder)[0:5]
+
+    # Call process_mesh function on each mesh in parallel
+    results = pool.map(process_mesh, [(f, number_of_tri, 80000, 5) for f in files])
+    # Concatenate results of all meshes into a single array
+    descriptors = np.concatenate([r[0] for r in results], axis=0)
+    triangles = np.concatenate([r[1] for r in results], axis=0)
+    vectors = np.concatenate([r[2] for r in results], axis=0)
+
+    # Save results to file
+    with open(save_folder+'Descriptors.npy', 'wb') as f:
+        np.save(f, descriptors)
+    with open(save_folder+'Triangles.npy', 'wb') as f:
+        np.save(f, triangles)
+    with open(save_folder+'Vectors.npy', 'wb') as f:
+        np.save(f, vectors)
+
+    print("Time in all: ", time.time()-t)
     
+    # Close the multiprocessing pool
+    pool.close()
+    pool.join()
