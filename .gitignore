@@ -12,6 +12,7 @@ backup/
 Okulo/
 PositionLib/
 prototype/
+LibData/
 
 *.tgz
 *.html
