@@ -15,6 +15,7 @@ PositionLib/
 prototype/
 library/
 test.py
+git-filter-repo
 
 *.tgz
 *.html
