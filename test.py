@@ -1,5 +1,8 @@
-import numpy as np
-l = ["2","3","4"]
-res = np.zeros((3,),np.int16)
-res = l
-print(res)
+import multiprocessing as mp
+
+def foo(para):
+    return para,
+
+pool = mp.Pool(mp.cpu_count()) 
+results = pool.map(foo,[i for i in range(5)])
+print(results)

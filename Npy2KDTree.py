@@ -1,10 +1,10 @@
 import numpy as np
 import pyflann
 import time
-folders = 55
+folders = 28
 main_folder = "./data/library/PositionLib/"
-save_folder = main_folder + "data/"
-m = 5 # Number of prototype files used in each generation
+save_folder = "./data/library/LibData/"
+m = 10 # Number of prototype files used in each generation
 n = 10000 # Number of triangles sampled from each prototype
 k = 5
 cks = 100

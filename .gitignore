@@ -9,15 +9,9 @@ BaselFaceModel/
 BFM_matlab_code/
 kinect_head_pose_db/
 backup/
-1/
-2/
-3/
-4/
-5/
-6/
 Okulo/
 PositionLib/
-!Libdata/
+prototype/
 
 *.tgz
 *.html

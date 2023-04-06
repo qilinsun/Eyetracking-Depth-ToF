@@ -12,7 +12,7 @@ import time
 input_folder = "./data/input/"
 proto_folder = "./data/prototype/rnd_heads/"
 test_face = "rnd_head.ply"
-save_folder = "./data/library/PositionLib/data/"
+save_folder = "./data/library/LibData/"
 # save_folder = "./data/library/test/"
 # depth_name = ""
 
@@ -252,6 +252,12 @@ def voting(save_folder,pcd,landmk_index,h,tlr = 5000):
 # p2 = vectors[0][5]-vectors[0][4] # corres
 # print(p1)
 # print(p2)
+
+if __name__ == "__main__":
+    plydata = o3d.io.read_triangle_mesh(proto_folder+"28/rnd_head_9.ply")
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = plydata.vertices
+    print(voting(save_folder,pcd,5,1,tlr = 5500)[0][0])
 
 
 

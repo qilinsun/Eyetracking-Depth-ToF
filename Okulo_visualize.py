@@ -7,7 +7,7 @@ from read_depth import loadDepthImageCompressed
 input_folder = "./data/input/"
 proto_folder = "./data/prototype/rnd_heads/"
 test_face = "rnd_head.ply"
-save_folder = "./data/library/PositionLib/data/"
+save_folder = "./data/library/LibData/"
 
 
 # Orientations, estimated centroids and landmarks, and sample triangles

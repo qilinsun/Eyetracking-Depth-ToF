@@ -15,11 +15,9 @@ import multiprocessing as mp
 # Intrinsic, set to Kinect2 Depth Camera parameters by default
 
 # Path of the images
-index = 56
+# index = 2
 number_of_tri = 10000
-proto_folder = "./data/prototype/rnd_heads/" + str(index) + "/"
-# save_folder = "./data/library/CurrentLib/"
-save_folder = "./data/library/PositionLib/" + str(index) + "/"
+
 
 
 # Get images
@@ -64,9 +62,10 @@ def sampleFromMesh(mesh,l):
     vertex = mesh.triangles[index]
     point = getSampleMesh(mesh,vertex)
     normal = mesh.triangle_normals[index] # normalized normal vector
-    r = np.random.random(3)
+    r = np.asarray([0,1,0],np.float32)
     r_parallel = r - np.dot(normal,r)*normal
     v1 = r_parallel/np.sqrt(np.dot(r_parallel,r_parallel)) * l / 1.732
+    v1 = rotation(v1,normal,randint(0,90))
     v2 = rotation(v1,normal,120)
     v3 = rotation(v1,normal,240)
     eqTriangle = np.array((point+v1,point+v2,point+v3))
@@ -139,10 +138,13 @@ def getDesIndices(pointCloud,points,tri,l,k):
     normal /= np.sqrt(np.sum(np.square(normal)))
     v1 = c-b
     v2 = b-a
+    v3 = a-c
     n1 = np.cross(v1,normal)
     n1 /= np.sqrt(np.sum(np.square(n1)))
     n2 = np.cross(v2,normal)
     n2 /= np.sqrt(np.sum(np.square(n2)))
+    n3 = np.cross(v3,normal)
+    n3 /= np.sqrt(np.sum(np.square(n3)))
     pc = np.asarray(pointCloud)
     for i in list(points[0]):
         point = pc[i]
@@ -150,7 +152,7 @@ def getDesIndices(pointCloud,points,tri,l,k):
         x1 = (np.dot(point,n1)-np.dot(a,n1))/(0.866*l/k)
         # x2 = k-int((np.dot(point,n2)-np.dot(c,n2))/(0.866*l/k))-1
         x2 = (np.dot(point,n2)-np.dot(c,n2))/(0.866*l/k)
-        x3 = (np.dot(point,n1)-np.dot(a,n1))/(0.866*l/k)
+        x3 = (np.dot(point,n3)-np.dot(b,n3))/(0.866*l/k)
         if (x1 >= 0 and x1 < k and x2 >= 0 and x2 < k and x3 >= 0 and x3 < k):
             x1 = int(x1)
             x2 = k-1-int(x2)
@@ -237,9 +239,6 @@ def getDataPiece(faceName,n,l,k,d = 3000):
             tri,distances = ICPtransform(np.asarray(ply.vertices),neigh,sampleFromMesh(ply,l))
         datas = getDataVector(ply,tri,l,k)
         descriptors[i,:],triangles[i],ret[i] = datas
-    print(time.time()-t)
-    t = time.time()
-
     return descriptors,triangles,ret
 
 # files = os.listdir(proto_folder)
@@ -308,42 +307,44 @@ def process_mesh(par):
     des, tri, vec = getDataPiece(par[0], par[1], par[2], par[3])
     return des, tri, vec
 
-if __name__ == '__main__':
-    t = time.time()
-    try:
-        if os.listdir(save_folder) != []:
-            print("Folder " + save_folder + " is not empty. Are you sure to proceed?")
-            ans = input("Y/[N]")
-            if ans != "Y":
-                quit()
-    except:
-        os.mkdir(save_folder)
-    # print("Folder " + str(index) + " available.")
-    print("Start generating library...")
-    # Initialize multiprocessing pool with number of available CPUs
-    pool = mp.Pool(mp.cpu_count()) 
-    # print("Number of CPUs: ",mp.cpu_count()) #20
+# Current: 19 Finished
+for index in range(20,29):
+    proto_folder = "./data/prototype/rnd_heads/" + str(index) + "/"
+    # save_folder = "./data/library/CurrentLib/"
+    save_folder = "./data/library/PositionLib/" + str(index) + "/"
+    if __name__ == '__main__':
+        t = time.time()
+        try:
+            os.listdir(save_folder)
+        except:
+            os.mkdir(save_folder)
+        # print("Folder " + str(index) + " available.")
+        # print("Start generating library...")
+        # Initialize multiprocessing pool with number of available CPUs
+        pool = mp.Pool(mp.cpu_count()) 
+        # print("Number of CPUs: ",mp.cpu_count()) #20
 
-    # List of mesh filenames to process
-    files = os.listdir(proto_folder)[0:5]
+        # List of mesh filenames to process
+        files = os.listdir(proto_folder)
 
-    # Call process_mesh function on each mesh in parallel
-    results = pool.map(process_mesh, [(f, number_of_tri, 80000, 5) for f in files])
-    # Concatenate results of all meshes into a single array
-    descriptors = np.concatenate([r[0] for r in results], axis=0)
-    triangles = np.concatenate([r[1] for r in results], axis=0)
-    vectors = np.concatenate([r[2] for r in results], axis=0)
+        # Call process_mesh function on each mesh in parallel
+        results = pool.map(process_mesh, [(f, number_of_tri, 80000, 5) for f in files])
+        # Concatenate results of all meshes into a single array
+        descriptors = np.concatenate([r[0] for r in results], axis=0)
+        triangles = np.concatenate([r[1] for r in results], axis=0)
+        vectors = np.concatenate([r[2] for r in results], axis=0)
 
-    # Save results to file
-    with open(save_folder+'Descriptors.npy', 'wb') as f:
-        np.save(f, descriptors)
-    with open(save_folder+'Triangles.npy', 'wb') as f:
-        np.save(f, triangles)
-    with open(save_folder+'Vectors.npy', 'wb') as f:
-        np.save(f, vectors)
+        # Save results to file
+        with open(save_folder+'Descriptors.npy', 'wb') as f:
+            np.save(f, descriptors)
+        with open(save_folder+'Triangles.npy', 'wb') as f:
+            np.save(f, triangles)
+        with open(save_folder+'Vectors.npy', 'wb') as f:
+            np.save(f, vectors)
 
-    print("Time in all: ", time.time()-t)
-    
-    # Close the multiprocessing pool
-    pool.close()
-    pool.join()
+        print("Lib "+str(index)+" finished.")
+        print("Time: ", time.time()-t)
+        
+        # Close the multiprocessing pool
+        pool.close()
+        pool.join()
