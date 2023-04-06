@@ -1,6 +1,7 @@
 # Customized Settings
 reference/
 ObsoleteCodes/
+obsolete/
 head-pose-estimator/
 reference/
 result/
@@ -13,6 +14,7 @@ Okulo/
 PositionLib/
 prototype/
 library/
+test.py
 
 *.tgz
 *.html

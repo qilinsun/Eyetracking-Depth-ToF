@@ -80,9 +80,8 @@ def get_pcd():
     return pcd
 
 pcd = get_pcd()
-pcd1 = pcd.voxel_down_sample(3000)
-# o3d.visualization.draw_geometries([pcd])
+pcd1 = pcd.voxel_down_sample(4000)
 
-voting_res = voting(save_folder,pcd,5,1,tlr = 9000)
+voting_res = voting(save_folder,pcd1,5,1,tlr = 5000)
 visualize(voting_res,pcd)
 
