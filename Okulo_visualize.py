@@ -12,8 +12,8 @@ save_folder = "./data/library/LibData/"
 
 # Orientations, estimated centroids and landmarks, and sample triangles
 def visualize(res,pcd):
-    _,nose,nose_tip,right_eye,left_eye = res[2][0]
-    R = res[0][0]
+    _,nose,nose_tip,right_eye,left_eye = res[1]
+    R = res[0]
 #     R = np.asarray([[0.778027,-0.111741,0.618213], 
 # [-0.0218606,-0.978643,0.2044], 
 # [-0.62785,-0.172543,-0.758968] ])
@@ -35,11 +35,11 @@ def visualize(res,pcd):
                                                         nose+orie_vec/2,nose_tip+orie_vec,left_eye+orie_vec/2,right_eye+orie_vec/2]))
     lines.lines = o3d.utility.Vector2iVector(np.array([[0,4],[1,5],[2,6],[3,7]]))
     lines.colors = o3d.utility.Vector3dVector(np.array([[1,0.5,0],[0,0,1],[0,0,0],[0,0,0]]))
-    tri = o3d.geometry.LineSet()
-    tri.points = o3d.utility.Vector3dVector(res[3][0])
-    tri.lines = o3d.utility.Vector2iVector(np.array([[0,1],[0,2],[1,2]]))
-    tri.colors = o3d.utility.Vector3dVector(np.array([[1,0,0],[0,1,0],[0,0,1]]))
-    o3d.visualization.draw_geometries([lines,pcd,tri])
+    # tri = o3d.geometry.LineSet()
+    # tri.points = o3d.utility.Vector3dVector(res[3])
+    # tri.lines = o3d.utility.Vector2iVector(np.array([[0,1],[0,2],[1,2]]))
+    # tri.colors = o3d.utility.Vector3dVector(np.array([[1,0,0],[0,1,0],[0,0,1]]))
+    o3d.visualization.draw_geometries([lines,pcd])
 
 # def invert(nparray):
 #     h,w = nparray.shape
@@ -93,6 +93,6 @@ pcd1 = pcd.voxel_down_sample(5000)
 cl, ind = pcd1.remove_radius_outlier(nb_points=3, radius=5000)
 pcd1 = pcd1.select_by_index(ind)
 # o3d.visualization.draw_geometries([pcd1])
-voting_res = voting(save_folder,pcd1,5,1,tlr = 3500)
+voting_res = voting(save_folder,pcd1,5,1,cluster_num = 50, tlr = 3500)
 visualize(voting_res,pcd1)
 

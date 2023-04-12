@@ -85,7 +85,7 @@ def getNearDes(des,fnn,h):
 def transform(vec,trans,is_point = 0):
     target = np.dot(trans[:3,:3],vec.T).T
     target += trans[:3,3] * is_point
-    return target
+    return np.asarray(target)
 
 # For Debug
 def visual_tri(tri_list):
@@ -103,76 +103,64 @@ def visual_tri(tri_list):
 
 def vote(vectors,triangles,ind,tri,h,landmk_index):
     # ind,dis= getNearDes(des,descriptors,h)
-    # # ind = ind[0]
+    # ind = ind[0]
     # print(ind,dis)
     mul_trans = []
     mul_cen = []
     mul_vec = []
     # print("IND: ",ind)
-    for i in range(len(ind)):
-        index = ind[i]
-        corres_vec = vectors[index]
-        corres_tri = triangles[index]
-        base_cen = (tri[0]+tri[1]+tri[2])/3
-        # base_cen_tri = tri - base_cen
-        corres_cen = (corres_tri[0] + corres_tri[1] + corres_tri[2]) /3
-        # corres_cen_tri = corres_tri - corres_cen
-        # print("tri: ",tri)
-        # print("corres: ",corres_tri)
-        # print("Corres_Des: ",getDescriptor(vertices,corres_tri,80000,5))
-        # trans = np.dot(base_cen_tri.T,np.linalg.inv(corres_cen_tri.T))
-        # left_pupil = np.dot(trans,corres_cen_tri.T).T
-        # print(left_pupil)
-        A = np.array(corres_tri,np.int64)
-        B = np.array(tri,np.int64)
-        # print("sample: ", B)
-        # print("Corres: ", A)
-        centroid_A = np.mean(A, axis=0)
-        centroid_B = np.mean(B, axis=0)
-        A_centered = A - centroid_A
-        B_centered = B - centroid_B
-        M = np.dot(B_centered.T, A_centered)
-        U, _, Vt = np.linalg.svd(M)
-        # R = np.dot(Vt.T, U.T)
+    index = ind[0]
+    corres_vec = vectors[index]
+    corres_tri = triangles[index]
+    base_cen = (tri[0]+tri[1]+tri[2])/3
+    # base_cen_tri = tri - base_cen
+    corres_cen = (corres_tri[0] + corres_tri[1] + corres_tri[2]) /3
+    # corres_cen_tri = corres_tri - corres_cen
+    # print("tri: ",tri)
+    # print("corres: ",corres_tri)
+    # print("Corres_Des: ",getDescriptor(vertices,corres_tri,80000,5))
+    # trans = np.dot(base_cen_tri.T,np.linalg.inv(corres_cen_tri.T))
+    # left_pupil = np.dot(trans,corres_cen_tri.T).T
+    # print(left_pupil)
+    A = np.array(corres_tri,np.int64)
+    B = np.array(tri,np.int64)
+    # print("sample: ", B)
+    # print("Corres: ", A)
+    centroid_A = np.mean(A, axis=0)
+    centroid_B = np.mean(B, axis=0)
+    A_centered = A - centroid_A
+    B_centered = B - centroid_B
+    M = np.dot(B_centered.T, A_centered)
+    U, _, Vt = np.linalg.svd(M)
+    # R = np.dot(Vt.T, U.T)
+    R = np.dot(U,Vt)
+    if np.linalg.det(R) < 0:
+        Vt[2,:] *= -1
         R = np.dot(U,Vt)
-#         R = np.asarray(\
-# [[1,0,0],
-# [0,0.8,0],
-# [0,0,0.8]])
-        if np.linalg.det(R) < 0:
-            Vt[2,:] *= -1
-            R = np.dot(U,Vt)
-#         R = np.array([[0.980977,0.0777566,0.177872], 
-# [-0.0431257,-0.98067,-0.190858],
-# [-0.189274,0.179556,-0.965368]])
-#         R = np.array([[0.842508,-0.176389,0.508987],
-# [0.00292723,0.946356,0.323114], 
-# [-0.538676,-0.270736,0.797828]])
-        t = centroid_B - np.dot(R, centroid_A.T).T
-        # print("Distance before: ", np.sqrt(np.sum((B_centered-A_centered) ** 2)))
-        # print("Distance after: ", np.sqrt(np.sum((np.dot(R,A_centered.T).T - B_centered) ** 2)))
-        # visual_tri([B_centered,np.dot(R,A_centered.T).T])
-        trans = np.identity(4)
-        trans[:3, :3] = R
-        
-        trans[:3, 3] = t
-        # homo = np.identity(4)
-        # homo[:3,:3] = A
-        # visual_tri([B,np.dot(R,A.T).T+t])
-        # print("Sample Triangle: ",A_centered)
-        # print("Corres before trans: ",B_centered)
-        # print("Corres after trans: ",np.dot(R,B_centered))
-        # print("Orientation: ",R)
-        # left_pupil = np.dot(trans,np.array(corres_vec[3],np.int64).T).T + base_cen
-        # print("Estimated Location: ",left_pupil)
-        landmarks = []
-        for j in range(landmk_index):
-            landmarks.append(transform(corres_vec[j],trans,1))
-        centroid = transform(corres_vec[0],trans,1)
-        mul_trans.append(R)
-        mul_cen.append(centroid)
-        mul_vec.append(landmarks)
-    return mul_trans,mul_cen,mul_vec
+    t = centroid_B - np.dot(R, centroid_A.T).T
+    # print("Distance before: ", np.sqrt(np.sum((B_centered-A_centered) ** 2)))
+    # print("Distance after: ", np.sqrt(np.sum((np.dot(R,A_centered.T).T - B_centered) ** 2)))
+    # visual_tri([B_centered,np.dot(R,A_centered.T).T])
+    trans = np.identity(4)
+    trans[:3, :3] = R
+    trans[:3, 3] = t
+    # homo = np.identity(4)
+    # homo[:3,:3] = A
+    # visual_tri([B,np.dot(R,A.T).T+t])
+    # print("Sample Triangle: ",A_centered)
+    # print("Corres before trans: ",B_centered)
+    # print("Corres after trans: ",np.dot(R,B_centered))
+    # print("Orientation: ",R)
+    # left_pupil = np.dot(trans,np.array(corres_vec[3],np.int64).T).T + base_cen
+    # print("Estimated Location: ",left_pupil)
+    landmarks = []
+    for j in range(landmk_index):
+        landmarks.append(transform(corres_vec[j],trans,1))
+    centroid = transform(corres_vec[0],trans,1)
+    # mul_trans.append(R)
+    # mul_cen.append(centroid)
+    # mul_vec.append(landmarks)
+    return R,centroid,landmarks
 
 
 def multi_vote(n,flann,pcd,vectors,triangles,tolerance,landmk_index=5,h=1,l=80000, d=3000, k=5):
@@ -184,12 +172,12 @@ def multi_vote(n,flann,pcd,vectors,triangles,tolerance,landmk_index=5,h=1,l=8000
     vertices = pcd.points
     neigh = NearestNeighbors(n_neighbors=1)
     neigh.fit(vertices)
+    samples = []
     while (i < n):
         # try:
         tri, distances = ICPtransform(\
                 vertices,neigh,sampleFromVertices(pcd,l))
         if (distances[0]>d or distances[1]>d or distances[2]>d):
-            # print(distances)
             continue
         # index = 5
         # tri = triangles[index]+1000*np.random.random((1,3))
@@ -200,17 +188,15 @@ def multi_vote(n,flann,pcd,vectors,triangles,tolerance,landmk_index=5,h=1,l=8000
         # 5000: bad
         # 3000: good : bad = 6 : 4
         # 2000: often good, but too slow
-        if (dis > tolerance):
-            print(dis)
-            continue
-        print(ind,dis)
-        samples = []
+        # if (dis > tolerance):
+        #     # print(dis)
+        #     continue
+        # print(ind,dis)
         ret = vote(vectors,triangles,ind,tri,h,landmk_index)
-        for j in range(len(ret[0])):
-            orients.append(ret[0][j])
-            centroids.append(ret[1][j])
-            landmarks.append(ret[2][j])
-            samples.append(tri)
+        orients.append(ret[0])
+        centroids.append(ret[1])
+        landmarks.append(ret[2])
+        samples.append(tri)
         i += 1
         # except:
         #     continue
@@ -219,15 +205,73 @@ def multi_vote(n,flann,pcd,vectors,triangles,tolerance,landmk_index=5,h=1,l=8000
     return orients,centroids,landmarks,samples
 
 
-def isNear(R1, R2, theta):
+def isNear(vote1, vote2, theta_thres = 15, dis_thres = 25000):
+    R1,c1 = vote1
+    R2,c2 = vote2
     fdis = np.linalg.norm(R1-R2)
-    print(fdis)
-    return (fdis < 2.828*abs(math.sin(theta/360*math.pi)))
+    temp = np.asarray([c2[0]-c1[0],c2[1]-c1[1],c2[2]-c1[2]])
+    dis = np.sqrt(np.sum(np.square(temp)))
+    return (fdis < 2.828*abs(math.sin(theta_thres/360*math.pi)) and \
+            (dis < dis_thres))
+
+def cluster(voting_results):
+    mark = []
+    for i in range(len(voting_results[0])):
+        mark.append(0)
+    index = 1
+    size = 0
+    ret_index = 0
+    while True:
+        current_size = 0
+        for i in mark:
+            if mark[i] == 0:
+                current_size += 1
+                mark[i] = index
+                current = (voting_results[0][i],voting_results[1][i])
+                for j in range(i,len(mark)):
+                    comp = (voting_results[0][j],voting_results[1][j])
+                    if (mark[j] == 0) and \
+                        isNear(current,comp):
+                        mark[j] = index
+                        current_size += 1
+                break
+        if current_size == 0:
+            break
+        if current_size > size:
+            ret_index = index
+            size = current_size
+        index += 1
+    ret = []
+    for i in range(len(mark)):
+        if mark[i] == ret_index:
+            ret.append([voting_results[0][i],voting_results[1][i],\
+                        voting_results[2][i],voting_results[3][i]])
+    print("Clustering rate: ",len(ret)," out of ",len(mark))
+    return ret
+
+def average_voting(clustering):
+    size = len(clustering)
+    ave_rot = np.zeros((3,3),np.float32)
+    for i in clustering:
+        ave_rot += i[0]
+    ave_rot /= size
+    W, _, Vt = np.linalg.svd(ave_rot)
+    num = len(clustering[0][2])
+    landmarks = []
+    for i in range(num):
+        landmarks.append(np.zeros((3,),np.float32))
+    for i in range(size):
+        for j in range(num):
+            landmarks[j] += clustering[i][2][j]
+    for j in range(num):
+        landmarks[j] /= size
+    ret = (np.dot(W,Vt),landmarks)
+    return ret
 
 # return 4 arrays: datas from multiple votings
 # Orientations, estimated centroids and landmarks(0,1,2,3,4), and sample triangles
 # mesh = o3d.io.read_triangle_mesh(input_folder+test_face)
-def voting(save_folder,pcd,landmk_index,h,tlr = 5000):
+def voting(save_folder,pcd,landmk_index,h,cluster_num = 50,tlr = 5000):
     print("Start voting...")
     with open(save_folder+'Descriptors.npy', 'rb') as f:
         descriptors = np.load(f)
@@ -242,10 +286,11 @@ def voting(save_folder,pcd,landmk_index,h,tlr = 5000):
 
     # orients,centroids,landmarks, samples
     # pcd.points = o3d.utility.Vector3dVector(np.asarray(pcd.points))
-    votes = multi_vote(1,flann,pcd,vectors,triangles,tlr,landmk_index, h)
+    votes = multi_vote(50,flann,pcd,vectors,triangles,tlr,landmk_index, h)
+    filtered_votes = average_voting(cluster(votes))
     # print("Real location: ",vertices[4280])
     print("Voting Time: ",time.time()-t)
-    return votes
+    return filtered_votes
 
 
 # print(vertices[12278])
@@ -258,7 +303,8 @@ if __name__ == "__main__":
     plydata = o3d.io.read_triangle_mesh(proto_folder+"27/rnd_head_6.ply")
     pcd = o3d.geometry.PointCloud()
     pcd.points = plydata.vertices
-    print(voting(save_folder,pcd,5,1,tlr = 3000)[0][0])
+    pcd = pcd.voxel_down_sample(5000)
+    print(voting(save_folder,pcd,5,1,tlr = 5000)[0])
 
 
 
