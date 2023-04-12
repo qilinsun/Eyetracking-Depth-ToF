@@ -62,10 +62,11 @@ def sampleFromMesh(mesh,l):
     vertex = mesh.triangles[index]
     point = getSampleMesh(mesh,vertex)
     normal = mesh.triangle_normals[index] # normalized normal vector
-    r = np.asarray([0,1,0],np.float32)
+    # r = np.asarray([0,1,0],np.float32)
+    r = np.random.random(3)
     r_parallel = r - np.dot(normal,r)*normal
     v1 = r_parallel/np.sqrt(np.dot(r_parallel,r_parallel)) * l / 1.732
-    v1 = rotation(v1,normal,randint(0,90))
+    # v1 = rotation(v1,normal,randint(0,90))
     v2 = rotation(v1,normal,120)
     v3 = rotation(v1,normal,240)
     eqTriangle = np.array((point+v1,point+v2,point+v3))
@@ -307,8 +308,8 @@ def process_mesh(par):
     des, tri, vec = getDataPiece(par[0], par[1], par[2], par[3])
     return des, tri, vec
 
-# Current: 19 Finished
-for index in range(20,29):
+# Current: 40 Finished
+for index in range(41,50):
     proto_folder = "./data/prototype/rnd_heads/" + str(index) + "/"
     # save_folder = "./data/library/CurrentLib/"
     save_folder = "./data/library/PositionLib/" + str(index) + "/"

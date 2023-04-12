@@ -6,7 +6,7 @@ from read_depth import loadDepthImageCompressed
 input_folder = "./data/input/"
 proto_folder = "./data/prototype/rnd_heads/"
 test_face = "rnd_head.ply"
-save_folder = "./data/library/PositionLib/data/"
+save_folder = "./data/library/LibData/"
 
 
 
@@ -40,7 +40,7 @@ def visualize(res,pcd):
     tri = o3d.geometry.LineSet()
     tri.points = o3d.utility.Vector3dVector(res[3][0])
     tri.lines = o3d.utility.Vector2iVector(np.array([[0,1],[1,2],[0,2]]))
-    tri.colors = o3d.utility.Vector3dVector(np.array([[1,0,0],[1,0,0],[1,0,0]]))
+    tri.colors = o3d.utility.Vector3dVector(np.array([[1,0,0],[0,1,0],[0,0,1]]))
     o3d.visualization.draw_geometries([lines,pcd,tri])
 
 # def invert(nparray):
@@ -77,7 +77,7 @@ def get_pcd(number):
     depth_npy = loadDepthImageCompressed(rgbd_folder + number + ".bin")
     h, w = depth_npy.shape
     depth_npy = np.flipud(depth_npy)
-    h_cut = int(h/3)
+    h_cut = int(h/2.8)
     depth_npy = depth_npy[h_cut:-1,:]
     # h_cut = int(2*h/3)
     # depth_npy = depth_npy[0:h_cut,:]
@@ -128,8 +128,8 @@ def get_pcd(number):
 # pcd1 = pcd.voxel_down_sample(7000)
 
 # dis = np.linalg.norm(voting_res[0][0]-trans[0:3,0:3])
-pcd = get_pcd(3)
+pcd = get_pcd(2)
 pcd1 = pcd.voxel_down_sample(3000)
-voting_res = voting(save_folder,pcd1,5,1,tlr = 5500)
+voting_res = voting(save_folder,pcd1,5,1,tlr = 3000)
 visualize(voting_res,pcd)
 

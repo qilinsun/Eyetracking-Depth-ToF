@@ -26,7 +26,7 @@ def getNormals(pcd):
     # o3d.visualization.draw_geometries([pcd])
     downpcd = pcd.voxel_down_sample(voxel_size=0.001)
     # o3d.visualization.draw_geometries([downpcd])
-    downpcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=30000, max_nn=30))
+    downpcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=30000, max_nn=20))
     return downpcd.normals
 
 def rotation(v,n,theta):
@@ -41,7 +41,8 @@ def sampleFromVertices(pcd,l):
     index = randint(0,len(normal_set)-1)
     point = vertices[index]
     normal = normal_set[index]
-    r = np.random.random(3)
+    r = np.array([0,1,0])
+    r = rotation(r,normal,randint(-45,45))
     r_parallel = r - np.dot(normal,r)*normal
     v1 = r_parallel/np.sqrt(np.dot(r_parallel,r_parallel)) * l / 1.732
     v2 = rotation(v1,normal,120)
@@ -254,10 +255,10 @@ def voting(save_folder,pcd,landmk_index,h,tlr = 5000):
 # print(p2)
 
 if __name__ == "__main__":
-    plydata = o3d.io.read_triangle_mesh(proto_folder+"28/rnd_head_9.ply")
+    plydata = o3d.io.read_triangle_mesh(proto_folder+"27/rnd_head_6.ply")
     pcd = o3d.geometry.PointCloud()
     pcd.points = plydata.vertices
-    print(voting(save_folder,pcd,5,1,tlr = 5500)[0][0])
+    print(voting(save_folder,pcd,5,1,tlr = 3000)[0][0])
 
 
 
