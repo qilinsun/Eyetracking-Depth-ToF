@@ -1,20 +1,20 @@
 # Customized Settings
-reference/
-ObsoleteCodes/
-obsolete/
-head-pose-estimator/
-reference/
-result/
-.vscode/
-BaselFaceModel/
-BFM_matlab_code/
-kinect_head_pose_db/
-backup/
-Okulo/
-PositionLib/
-prototype/
-library/
-prototype/
+reference
+ObsoleteCodes
+obsolete
+head-pose-estimator
+reference
+result
+.vscode
+BaselFaceModel
+BFM_matlab_code
+kinect_head_pose_db
+backup
+Okulo
+PositionLib
+prototype
+library
+prototype
 
 test.py
 git-filter-repo
