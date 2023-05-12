@@ -35,10 +35,6 @@ def visualize(res,pcd):
                                                         nose+orie_vec/2,nose_tip+orie_vec,left_eye+orie_vec/2,right_eye+orie_vec/2]))
     lines.lines = o3d.utility.Vector2iVector(np.array([[0,4],[1,5],[2,6],[3,7]]))
     lines.colors = o3d.utility.Vector3dVector(np.array([[1,0.5,0],[0,0,1],[0,0,0],[0,0,0]]))
-    # tri = o3d.geometry.LineSet()
-    # tri.points = o3d.utility.Vector3dVector(res[3])
-    # tri.lines = o3d.utility.Vector2iVector(np.array([[0,1],[0,2],[1,2]]))
-    # tri.colors = o3d.utility.Vector3dVector(np.array([[1,0,0],[0,1,0],[0,0,1]]))
     o3d.visualization.draw_geometries([lines,pcd])
 
 # def invert(nparray):
@@ -79,20 +75,25 @@ def get_pcd():
     o3d.visualization.draw_geometries([pcd])
     return pcd
 
+def get_pcd_2():
+    global input_folder
+    pcd = o3d.io.read_point_cloud(input_folder+"Okulo/"+"2/"+"2.ply")
+    temp = np.asarray(pcd.points)
+    mask = np.ones_like(temp)
+    judge = (temp[:,0] > -0.5)*(temp[:,2] < -0.8)*(temp[:,1] > -0.22)
+    mask[:,0] = judge
+    mask[:,1] = judge
+    mask[:,2] = judge
+    temp = temp*mask
+    pcd.points = o3d.utility.Vector3dVector(np.asarray(temp)*500000)
+    return pcd
+
 # pcd = get_pcd()
-pcd = o3d.io.read_point_cloud(input_folder+"Okulo/"+"2/"+"2.ply")
-temp = np.asarray(pcd.points)
-mask = np.ones_like(temp)
-judge = (temp[:,0] > -0.5)*(temp[:,2] < -0.8)*(temp[:,1] > -0.22)
-mask[:,0] = judge
-mask[:,1] = judge
-mask[:,2] = judge
-temp = temp*mask
-pcd.points = o3d.utility.Vector3dVector(np.asarray(temp)*500000)
-pcd1 = pcd.voxel_down_sample(5000)
+pcd = get_pcd_2()
+pcd1 = pcd.voxel_down_sample(3000)
 cl, ind = pcd1.remove_radius_outlier(nb_points=3, radius=5000)
 pcd1 = pcd1.select_by_index(ind)
 # o3d.visualization.draw_geometries([pcd1])
-voting_res = voting(save_folder,pcd1,5,1,cluster_num = 50, tlr = 3500)
+voting_res = voting(save_folder,pcd1,5,1,cluster_num = 100, tlr = 5000)
 visualize(voting_res,pcd1)
 
