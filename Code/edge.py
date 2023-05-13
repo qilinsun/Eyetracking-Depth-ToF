@@ -51,40 +51,54 @@ def get_grad_map(zone):
     return mask*x_grad,mask*y_grad,mask*mag
 
 def locate(zone,is_left = 0):
-    grad_map = get_grad_map(zone)
-    pos = np.asarray((-1,-1))
-    sum_map = np.zeros_like(zone)
+    # grad_map = get_grad_map(zone)
+    # pos = np.asarray((-1,-1))
+    # sum_map = np.zeros_like(zone)
+    # for i in range(zone.shape[0]):
+    #     for j in range(zone.shape[1]):
+    #         sum = 0
+    #         count = 0
+    #         for x in range(max(0,i-5),min(zone.shape[0],i+5)):
+    #             for y in range(max(0,j-5),min(zone.shape[1],j+5)):
+    #                 mag = grad_map[2][x,y]
+    #                 if mag > 0:
+    #                     count += 1
+    #                     length = ((x-i)**2+(y-j)**2)**0.5
+    #                     vec_x = (x-i)*grad_map[0][x,y]
+    #                     vec_y = (y-j)*grad_map[1][x,y]
+    #                     if (vec_x + vec_y) > 0:
+    #                         sum += ((vec_x+vec_y)/(length*mag))**2
+    #         assert count != 0, "Failed to find the center!"
+    #         sum /= count
+    #         sum *= (255-zone[i][j])
+    #         sum_map[i][j] = sum
+    # pos = np.argmax(sum_map)
+    # pos = np.unravel_index(pos, sum_map.shape)
+    # plt.imshow(sum_map)
+    # plt.plot([0,pos[1]],[0,pos[0]])
+    # if is_left:
+    #     plt.savefig("./temp/Left.png")
+    #     plt.imshow(zone)
+    #     plt.savefig("./temp/Left_Zone.png")
+    # else:
+    #     plt.savefig("./temp/Right.png")
+    #     plt.imshow(zone)
+    #     plt.savefig("./temp/Right_Zone.png")
+    minval = 255
     for i in range(zone.shape[0]):
         for j in range(zone.shape[1]):
-            sum = 0
-            count = 0
-            for x in range(max(0,i-5),min(zone.shape[0],i+5)):
-                for y in range(max(0,j-5),min(zone.shape[1],j+5)):
-                    mag = grad_map[2][x,y]
-                    if mag > 0:
-                        count += 1
-                        length = ((x-i)**2+(y-j)**2)**0.5
-                        vec_x = (x-i)*grad_map[0][x,y]
-                        vec_y = (y-j)*grad_map[1][x,y]
-                        if (vec_x + vec_y) > 0:
-                            sum += ((vec_x+vec_y)/(length*mag))**2
-            assert count != 0, "Failed to find the center!"
-            sum /= count
-            sum *= (255-zone[i][j])
-            sum_map[i][j] = sum
-    pos = np.argmax(sum_map)
-    pos = np.unravel_index(pos, sum_map.shape)
-    plt.imshow(sum_map)
+            if zone[i,j] < minval:
+                pos = np.asarray((i,j))
+                minval = zone[i,j]
+    plt.figure()
     plt.plot([0,pos[1]],[0,pos[0]])
+    print("Darkest point: ",pos)
     if is_left:
-        plt.savefig("./temp/Left.png")
         plt.imshow(zone)
         plt.savefig("./temp/Left_Zone.png")
     else:
-        plt.savefig("./temp/Right.png")
         plt.imshow(zone)
         plt.savefig("./temp/Right_Zone.png")
-    print(pos,zone.max(),zone.min())
     return pos
 
 # img.shape == (480,640)

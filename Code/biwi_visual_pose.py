@@ -25,23 +25,24 @@ def visualize(res,pcd, plane_pupils):
     orie_vec = transform(np.asarray([0,0,1]),trans)
     orie_vec *= 100000
     vertices = np.array(pcd.points)
-
     left_cen = left_eye - transform(np.asarray([0,0,12000]),trans)
     right_cen = right_eye - transform(np.asarray([0,0,12000]),trans)
     real_left, real_right = get_3D_pupils(plane_pupils,res)
     print(left_eye,left_cen,real_left)
     # For drawing
-    left_end = 10 * np.asarray(real_left) - 9 * left_cen
-    right_end = 10 * np.asarray(real_right) - 9 * right_cen    
+    left_end = 5 * np.asarray(real_left) - 4 * left_cen
+    right_end = 5 * np.asarray(real_right) - 4 * right_cen    
+    # left_end = np.asarray(real_left)
+    # right_end = np.asarray(real_right)
     print("Start visualizing...")
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(vertices)
     lines = o3d.geometry.LineSet()
-    lines.points = o3d.utility.Vector3dVector(np.array([nose,nose_tip,left_cen,right_cen,\
+    lines.points = o3d.utility.Vector3dVector(np.array([nose,nose_tip,real_left,real_right,\
                                                         nose+orie_vec/2,nose_tip+orie_vec,left_end,right_end]))
     lines.lines = o3d.utility.Vector2iVector(np.array([[0,4],[1,5],[2,6],[3,7]]))
     lines.colors = o3d.utility.Vector3dVector(np.array([[1,0.5,0],[0,0,1],[0,0,0],[0,0,0]]))
-    # o3d.visualization.draw_geometries([lines,pcd])
+    o3d.visualization.draw_geometries([lines,pcd])
     o3d.io.write_point_cloud("./temp/face.ply",pcd)
 
 def read_camera_para(cal):
@@ -187,16 +188,16 @@ def get_3D_pupils(pupils, voting_res):
     # x and y are exchanged during 2-D image processing, so here
     # we exchange them back.
     x1 = (pupils[0][1] + DEV - CX) * (left[2]) / FX
-    y1 = (pupils[0][0] - DEV - CY) * (left[2]) / FY
+    y1 = (480 - pupils[0][0] + DEV - CY) * (left[2]) / FY
     x2 = (pupils[1][1] + DEV - CX) * (right[2]) / FX
-    y2 = (pupils[1][0] - DEV - CY) * (right[2]) / FY
+    y2 = (480 - pupils[1][0] + DEV - CY) * (right[2]) / FY
     return [x1,y1,left[2]],[x2,y2,right[2]]
 
 # pcd = get_pcd(2)
 # pcd1 = pcd.voxel_down_sample(3000)
 # voting_res = voting(save_folder,pcd1,5,1,cluster_num = 100, tlr = 3000)
 if __name__ == "__main__":
-    num = 2
+    num = 4
     # Parameters: index of the image, times of voting
     pcd = get_pcd(num)
     pcd1 = pcd.voxel_down_sample(3000)
@@ -204,6 +205,12 @@ if __name__ == "__main__":
     img = cv.imread(input_folder+str(num)+"/"+str(num)+".png",cv.IMREAD_GRAYSCALE)
     temp = visualize_pupil(num,vt_res)
     image_pupil = detect_pupil(temp[1],temp[0])
+    left, right = image_pupil
+    plt.figure()
+    plt.imshow(temp[1])
+    plt.plot([temp[0][0][0],temp[0][1][0]],[temp[0][0][1],temp[0][1][1]],color = (1,0,1))
+    plt.plot([left[1],right[1]],[left[0],right[0]],color = (1,1,1))
+    plt.savefig("./temp/result.png")
     visualize(vt_res,pcd,image_pupil)
     # left, right = detect_pupil(temp[1],temp[0])
     # print(left,right)
@@ -213,9 +220,7 @@ if __name__ == "__main__":
     # plt.imshow(intensity)
     # # Pink Line: Original
     # # White Line: Estimated Location
-    # plt.plot([temp[0][0][0],temp[0][1][0]],[temp[0][0][1],temp[0][1][1]],color = (1,0,1))
-    # plt.plot([left[1],right[1]],[left[0],right[0]],color = (1,1,1))
-    # plt.savefig("./temp/result.png")
+    
 
 
 
