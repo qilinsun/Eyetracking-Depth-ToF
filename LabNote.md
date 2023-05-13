@@ -40,22 +40,40 @@ The pointclouds from the Okulo camera are not clean enough. Considering to apply
 
 ========================================================
 
-## Week (1), April 4th, 2023
+## Week (3-End), April 20th - May 13th, 2023
 
 #### Todo List Week (1)
 
-- [ ] Task 1
+- [ ] Find the accurate positions of pupils on the 2D image
 
-- [ ] Task 2
+- [ ] Project the accurate positions to 3D pointCloud
 
-### What achieved week (1)
+- [ ] Estimate the center of the eyeballs
+
+- [ ] Visualize the gaze
+
+### What achieved
 
 #### 1 Pipeline
 
+- Implement all tasks mentioned above
+
 #### 2 Results
 
-#### 3 other
+- The estimation based on 2D images are quite accurate
 
-### Problems left week (1)
+- The locations estimated on the pointCloud are not very accurate, but 
+is enough for estimating the gaze
 
-### Plans for week (2)
+- The gaze tracking process performed well on the biwi dataset
+
+### Problems left
+
+- Modify the code so that it can also perform on the Okulo dataset, i.e., the pictures taken by us. To achieve this, we need to: 
+1. locate the face both on the 2D image and the 3D pointCloud. 
+2. In addition, the pointClouds Okulo gets don't work well with open3D module, e.g., there are points that deviate from their real positions after rendering, which leads to the difficulty of locating the face.
+3. Also, the scale of the training set is 1000:1mm. To fit the pointCloud from Okulo to our model, we need to find a proper parameter to scale it.
+
+- Modify the performance of the code
+1. The process of pose estimation runs too slow. It may stem from the large size of the training set (I trained abundant meshes), or the number of clustering (Typically, we generate 30-100 votes and cluster them to find the most plausible result. Too many votes, though boosting the validity of the result, cost too much time.)
+2. The code itself is terrible and is written in bad coding style. 
